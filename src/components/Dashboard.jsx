@@ -34,6 +34,17 @@ function Dashboard() {
           >
             Sell
           </Link>
+          <Link
+            to="/dashboard/vehicledetails"
+            className="block p-4 hover:bg-blue-500 hover:text-white"
+          >
+            All Vehicle Details
+          </Link>
+          <Link
+            to="/dashboard/logout"
+            className="block p-4 hover:bg-blue-500 hover:text-white"
+          >Logout
+          </Link>
         </nav>
       </div>
 

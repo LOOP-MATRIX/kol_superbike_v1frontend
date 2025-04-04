@@ -19,20 +19,25 @@ function Service() {
     if (selectedPurchase) {
       fetchServices(selectedPurchase._id);
     } else {
-      setServices([]); // Clear services when no purchase selected
+      setServices([]);
     }
   }, [selectedPurchase]);
 
   const fetchServices = async (purchaseId) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:8015/api/service?purchaseId=${purchaseId}`, {
+      const response = await fetch(`http://localhost:8015/api/service/purchase/${purchaseId}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await response.json();
-      setServices(data);
+      if (data.length > 0) {
+        setServices(data);
+      } else {
+        setServices([]); // No data or 404
+      }
     } catch (error) {
       console.error('Error fetching services:', error);
+      setServices([]);
     }
   };
 
@@ -158,14 +163,22 @@ function Service() {
                 </tr>
               </thead>
               <tbody>
-                {services.map((service) => (
-                  <tr key={service._id} className="border-b">
-                    <td className="p-2">{service.date}</td>
-                    <td className="p-2">{service.vehicleNumber}</td>
-                    <td className="p-2">{service.serviceCost}</td>
-                    <td className="p-2">{service.description}</td>
+                {services.length > 0 ? (
+                  services.map((service) => (
+                    <tr key={service._id} className="border-b">
+                      <td className="p-2">{service.date}</td>
+                      <td className="p-2">{service.vehicleNumber}</td>
+                      <td className="p-2">{service.serviceCost}</td>
+                      <td className="p-2">{service.description}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="p-2 text-center text-gray-500">
+                      No Data Found
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

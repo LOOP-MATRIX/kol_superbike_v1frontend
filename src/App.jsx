@@ -6,6 +6,8 @@ import Purchase from './components/Purchase';
 import Service from './components/Service';
 import Petrol from './components/Petrol';
 import Sell from './components/Sell';
+import VehicleDetails from './components/VehicleDetails';
+import Logout from './components/Logout';
 
 function App() {
   return (
@@ -17,6 +19,8 @@ function App() {
           <Route path="service" element={<Service />} />
           <Route path="petrol" element={<Petrol />} />
           <Route path="sell" element={<Sell />} />
+          <Route path="vehicledetails" element={<VehicleDetails />} />
+          <Route path="logout" element={<Logout />} />
         </Route>
       </Routes>
     </BrowserRouter>
