@@ -135,7 +135,7 @@ function Service() {
           <p>Vehicle Number: {selectedPurchase.vehicleNumber}</p>
           <p>Customer: {selectedPurchase.customerName}</p>
           <p>Brand: {selectedPurchase.brand}</p>
-          <p>Purchase Price: {selectedPurchase.oldOwner?.purchasePrice || 'N/A'}</p>
+          <p>Purchase Price: {selectedPurchase.purchasePrice || 'N/A'}</p>
         </div>
       )}
       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-8">
