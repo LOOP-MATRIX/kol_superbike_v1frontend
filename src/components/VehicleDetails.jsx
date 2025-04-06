@@ -5,17 +5,19 @@ import 'react-toastify/dist/ReactToastify.css';
 
 function VehicleDetails() {
   const [purchases, setPurchases] = useState([]);
+  const [filteredPurchases, setFilteredPurchases] = useState([]);
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [services, setServices] = useState([]);
   const [petrolRecords, setPetrolRecords] = useState([]);
   const [sells, setSells] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
     fetchPurchases();
-    if (selectedPurchase) {
-      fetchAllDetails(selectedPurchase._id);
-    } else {
+    if (selectedPurchase) fetchAllDetails(selectedPurchase._id);
+    else {
       setServices([]);
       setPetrolRecords([]);
       setSells([]);
@@ -32,6 +34,7 @@ function VehicleDetails() {
       console.log('Purchases Response:', data);
       if (data.success) {
         setPurchases(data.data);
+        setFilteredPurchases(data.data);
       }
     } catch (error) {
       console.error('Error fetching purchases:', error);
@@ -43,24 +46,20 @@ function VehicleDetails() {
     setLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
+      const [serviceResponse, petrolResponse, sellResponse] = await Promise.all([
+        fetch(`http://localhost:8015/api/service/purchase/${purchaseId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`http://localhost:8015/api/petrol/purchase/${purchaseId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`http://localhost:8015/api/sell/purchase/${purchaseId}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+      ]);
 
-      const serviceResponse = await fetch(`http://localhost:8015/api/service/purchase/${purchaseId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
       const serviceData = await serviceResponse.json();
       console.log('Service Response:', serviceData);
       setServices(serviceData && serviceData.length > 0 ? serviceData : []);
 
-      const petrolResponse = await fetch(`http://localhost:8015/api/petrol/purchase/${purchaseId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
       const petrolData = await petrolResponse.json();
       console.log('Petrol Response:', petrolData);
       setPetrolRecords(petrolData.success && petrolData.data && petrolData.data.length > 0 ? petrolData.data : []);
 
-      const sellResponse = await fetch(`http://localhost:8015/api/sell/purchase/${purchaseId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
       const sellData = await sellResponse.json();
       console.log('Sell Response:', sellData);
       setSells(sellData.success && sellData.data && sellData.data.length > 0 ? sellData.data : []);
@@ -72,10 +71,20 @@ function VehicleDetails() {
     }
   };
 
-  const handlePurchaseSelect = (e) => {
-    const purchaseId = e.target.value;
-    const selected = purchases.find((p) => p._id === purchaseId);
-    setSelectedPurchase(selected || null);
+  const handleSearch = (e) => {
+    const term = e.target.value.toLowerCase();
+    setSearchTerm(term);
+    const filtered = purchases.filter((purchase) =>
+      purchase.vehicleNumber.toLowerCase().includes(term)
+    );
+    setFilteredPurchases(filtered);
+  };
+
+  const handlePurchaseSelect = (purchase) => {
+    setSelectedPurchase(purchase);
+    setIsDropdownOpen(false);
+    setSearchTerm('');
+    setFilteredPurchases(purchases);
   };
 
   const handleUpdate = async (type, id, updatedData) => {
@@ -85,10 +94,7 @@ function VehicleDetails() {
       const url = `http://localhost:8015/api/${type}/${id}`;
       const response = await fetch(url, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify(updatedData),
       });
       const data = await response.json();
@@ -141,26 +147,43 @@ function VehicleDetails() {
   return (
     <div className="p-6 bg-white text-black min-h-screen">
       <h1 className="text-4xl font-extrabold mb-8 border-b-2 border-black pb-2">Vehicle Details</h1>
-      <div className="mb-6">
-        <select
-          onChange={handlePurchaseSelect}
-          className="w-full p-3 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-          defaultValue=""
+      <div className="mb-6 relative">
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="w-full p-3 border border-black rounded-lg text-left bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-black"
         >
-          <option value="" disabled>Select a Vehicle</option>
-          {purchases.map((purchase) => (
-            <option key={purchase._id} value={purchase._id}>
-              {purchase.vehicleNumber} - {purchase.customerName}
-            </option>
-          ))}
-        </select>
+          {selectedPurchase ? `${selectedPurchase.vehicleNumber} - ${selectedPurchase.customerName}` : 'Select a Vehicle'}
+        </button>
+        {isDropdownOpen && (
+          <div className="absolute z-10 w-full bg-white border border-black rounded-lg mt-1 shadow-lg max-h-60 overflow-y-auto">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearch}
+              placeholder="Search by Vehicle Number"
+              className="w-full p-2 border-b border-black focus:outline-none"
+            />
+            {filteredPurchases.length > 0 ? (
+              filteredPurchases.map((purchase) => (
+                <div
+                  key={purchase._id}
+                  onClick={() => handlePurchaseSelect(purchase)}
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {purchase.vehicleNumber} - {purchase.customerName}
+                </div>
+              ))
+            ) : (
+              <div className="p-2 text-center text-black">No vehicles found</div>
+            )}
+          </div>
+        )}
       </div>
 
       {loading && <p className="text-black text-lg">Loading...</p>}
 
       {selectedPurchase && (
         <>
-          {/* Purchase Details */}
           <div className="mb-8 bg-white p-6 rounded-lg shadow-md border border-black">
             <h2 className="text-2xl font-bold mb-4">Purchase Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -195,7 +218,6 @@ function VehicleDetails() {
             </div>
           </div>
 
-          {/* Service Section */}
           <div className="mb-8 bg-white p-6 rounded-lg shadow-md border border-black">
             <h2 className="text-2xl font-bold mb-4">Service Records</h2>
             <div className="overflow-x-auto">
@@ -247,7 +269,6 @@ function VehicleDetails() {
             </div>
           </div>
 
-          {/* Petrol Section */}
           <div className="mb-8 bg-white p-6 rounded-lg shadow-md border border-black">
             <h2 className="text-2xl font-bold mb-4">Petrol Records</h2>
             <div className="overflow-x-auto">
@@ -299,7 +320,6 @@ function VehicleDetails() {
             </div>
           </div>
 
-          {/* Sell Section */}
           <div className="bg-white p-6 rounded-lg shadow-md border border-black">
             <h2 className="text-2xl font-bold mb-4">Sell Records</h2>
             <div className="overflow-x-auto">
@@ -355,18 +375,7 @@ function VehicleDetails() {
         </>
       )}
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-      />
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
     </div>
   );
 }

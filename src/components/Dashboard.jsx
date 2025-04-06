@@ -3,13 +3,19 @@ import { Link, Outlet } from 'react-router-dom';
 
 function Dashboard() {
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-full bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-md">
         <div className="p-4">
           <h2 className="text-xl font-bold">Admin Panel</h2>
         </div>
         <nav className="mt-4">
+          <Link
+            to="/dashboard/manage"
+            className="block p-4 hover:bg-blue-500 hover:text-white"
+          >
+            Manage
+          </Link>
           <Link
             to="/dashboard/purchase"
             className="block p-4 hover:bg-blue-500 hover:text-white"
